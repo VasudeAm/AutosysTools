@@ -3,15 +3,14 @@
 ###############################################################################################
 #This script is used for extarcting Autosys Jobs list from Autosys jil files
 #Syntax : sh update_autosys_jobs.sh
-#Output : A file named Autosys_Jobs_List_yyyy-mm-dd.txt with autossy job names and their details will be
+#Output : A file named Autosys_Jobs_List_yyyy-mm-dd.txt with autosys job names and their details will be
 #generated.
 ###############################################################################################
 
 #Function to do initial assignments and checks
 initialize()
 {
-        readonly script_dir="$( cd "$(dirname "$0")" && pwd -P )"
-        . "$script_dir/environment.sh"
+        readonly script_dir="$( cd "$(dirname "$0")" && pwd -P )
         temp_dir="$script_dir/temp"
         filename="$temp_dir/job_jils_$(date +'%F').txt"
         output="$temp_dir/Autosys_Jobs_List_$(date +'%F').txt"
@@ -33,39 +32,39 @@ process_jils()
 		
         #initialisations
         jobname=""
-        projectname=""
+        run_command=""
         machine=""
         starttime="NIL"
         runcal="NIL"
         excal="NIL"
         startcon=""
         daysofweek="NIL"
-		    profile=""
+	profile=""
 
         #parses jil file to get value for each field
         jobname=$(awk '/insert_job/{print $2}' "$file")
 		
-		    #project directory name parsed from the command argument
+        #Run command name parsed from the command argument
         run_command=$(awk '/command/{print $2}' "$file")
 		
-		    #run machine name
+        #run machine name
         machine=$(awk '/machine/' "$file")
 		
-		    #get the start time of the job if any
+        #get the start time of the job if any
         starttime=$(awk -F '"' 'if $1 == "start_times" {print $2} else if $1 == "start_mins" {print "minute" $2 "of every hour"}' "$file")
 		
-		    #get the run calendar name & exclude calendar names
+        #get the run calendar name & exclude calendar names
         runcal=$(awk '/run_calendar/{print $2}' "$file")
         excal=$(awk '/exclude_calendar/{print $2}' "$file")
 		
-		    #get the start condition
+	#get the start condition
         startcon=$(awk -F ':' '/condition:/{print $2}' "$file")
 		
-		    #get days of week attribute
+        #get days of week attribute
         daysofweek=$(awk '/days_of_week/{print $2}' "$file")
 		
-		    #get the aurtosys profile value
-		    profile=$(awk '/profile/{print $2}' "$file")
+	#get the aurtosys profile attribute value
+        profile=$(awk '/profile/{print $2}' "$file")
 
         #assign value NA/NIl as applicable
         if [ "$starttime" == "" ]
@@ -110,6 +109,7 @@ main()
 
         echo "------------Script called at time $(date) ................."
         initialize
+	
         #write all the jils in the current environment of all jobs to a file
         autorep -j ALL -q >> "$filename"
 
@@ -126,7 +126,7 @@ main()
 
                 if [ "$str1" == "/*" ]
                 then
-                        #echo " call process jils "
+                        #call the function to process a single jil
                         process_jils "$temp_file"
 
                 fi
@@ -140,11 +140,11 @@ main()
         fi
 
         #Sort the final output file
-        sort -t ";" -k1 "$output"
+        sort -t ";" "$output"
 
 
         #Add header to the output file
-        sed  -i '1i Job Name| Project Name| Machine| Start Time| Run Calendar | Exclude Calendar| Start Condition| Scheduled Days | Profile ' "$output"
+        sed  -i '1i Job Name| Run command | Machine| Start Time| Run Calendar | Exclude Calendar| Start Condition| Scheduled Days | Profile ' "$output"
 
         #Removing the temporary jil file & jil output files
         [[ -f "$temp_file" ]] && rm "$temp_file"
